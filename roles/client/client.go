@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+   Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 /*
 	The client package defines the struct and functions of a Rabia client. There are two types of clients, open-loop
@@ -36,7 +36,6 @@ package client
 
 import (
 	"fmt"
-	"github.com/rs/zerolog"
 	"math"
 	"math/rand"
 	"os"
@@ -49,11 +48,13 @@ import (
 	"sort"
 	"sync"
 	"time"
+
+	"github.com/rs/zerolog"
 )
 
 /*
-	A clients sends one or more requests (i.e., DB read or write operations) at a time, we note down the send time and
-	receive time in the following data structure
+A clients sends one or more requests (i.e., DB read or write operations) at a time, we note down the send time and
+receive time in the following data structure
 */
 type BatchedCmdLog struct {
 	SendTime    time.Time     // the send time of this client-batched command
@@ -62,7 +63,7 @@ type BatchedCmdLog struct {
 }
 
 /*
-	A Rabia client
+A Rabia client
 */
 type Client struct {
 	ClientId uint32
@@ -80,7 +81,7 @@ type Client struct {
 }
 
 /*
-	Initialize a Rabia client
+Initialize a Rabia client
 */
 func ClientInit(clientId uint32, proxyIp string) *Client {
 	zerologger, logFile := logger.InitLogger("client", clientId, 0, "both")
@@ -104,9 +105,9 @@ func ClientInit(clientId uint32, proxyIp string) *Client {
 }
 
 /*
-	1. start the OS signal listener
-	2. establish the TCP connection with a designated proxy
-	3. starts a terminal logger
+1. start the OS signal listener
+2. establish the TCP connection with a designated proxy
+3. starts a terminal logger
 */
 func (c *Client) Prologue() {
 	go system.SigListen(c.Done) //
@@ -115,25 +116,24 @@ func (c *Client) Prologue() {
 }
 
 /*
-	1. close the Done channel to inform other routines who listen to this signal to exit
-	2. write a concluding log to file
-	3. close the log file
-	4. close the TCP connection
+1. close the Done channel to inform other routines who listen to this signal to exit
+2. write a concluding log to file
+3. close the log file
+4. close the TCP connection
 */
 func (c *Client) Epilogue() {
 	close(c.Done)
 	c.writeToLog()
 	if err := c.LogFile.Sync(); err != nil {
-		panic(err)
+		//panic(err)
 	}
 	c.TCP.Close()
 }
 
 /*
-	The main body of a closed-loop client.
-	A closed-loop client sends one (batched) request and waits for a reply at a time. In waiting for a reply, if the
-	client finds the Conf.ClientTimeout time is reached, it exits the loop.
-
+The main body of a closed-loop client.
+A closed-loop client sends one (batched) request and waits for a reply at a time. In waiting for a reply, if the
+client finds the Conf.ClientTimeout time is reached, it exits the loop.
 */
 func (c *Client) CloseLoopClient() {
 	c.startSending = time.Now()
@@ -153,7 +153,7 @@ MainLoop:
 }
 
 /*
-	The main body of a open-loop client.
+The main body of a open-loop client.
 */
 func (c *Client) OpenLoopClient() {
 	c.Wg.Add(2)
@@ -183,11 +183,11 @@ func (c *Client) OpenLoopClient() {
 }
 
 /*
-	Sends a single request.
-	val is a string of 17 bytes (modifiable through Conf.KeyLen and Conf.ValLen)
-	[0:1]   (1 byte): "0" == a write operation,  "1" == a read operation
-	[1:9]  (8 bytes): a string Key
-	[9:17] (8 bytes): a string Value
+Sends a single request.
+val is a string of 17 bytes (modifiable through Conf.KeyLen and Conf.ValLen)
+[0:1]   (1 byte): "0" == a write operation,  "1" == a read operation
+[1:9]  (8 bytes): a string Key
+[9:17] (8 bytes): a string Value
 */
 func (c *Client) sendOneRequest(i int) {
 	obj := Command{CliId: c.ClientId, CliSeq: uint32(i), Commands: make([]string, Conf.ClientBatchSize)}
@@ -206,7 +206,7 @@ func (c *Client) sendOneRequest(i int) {
 }
 
 /*
-	Processes on received reply
+Processes on received reply
 */
 func (c *Client) processOneReply(rep Command) {
 	if c.CommandLog[rep.CliSeq].Duration != time.Duration(0) {
@@ -218,7 +218,7 @@ func (c *Client) processOneReply(rep Command) {
 }
 
 /*
-	A terminal logger that prints the status of a client to terminal
+A terminal logger that prints the status of a client to terminal
 */
 func (c *Client) terminalLogger() {
 	tLogger, file := logger.InitLogger("client", c.ClientId, 1, "both")
@@ -248,19 +248,35 @@ func (c *Client) terminalLogger() {
 }
 
 /*
-	Note: logs produced from there are for eye-inspection, they are often baised in telling how the system performs.
-	Maybe consider using the log produced from the system-end to calculate throughput and latencies.
+Note: logs produced from there are for eye-inspection, they are often baised in telling how the system performs.
+Maybe consider using the log produced from the system-end to calculate throughput and latencies.
 */
 func (c *Client) writeToLog() {
+	defer func() {
+		if r := recover(); r != nil {
+			c.Logger.Error().
+				Interface("recover", r).
+				Msg("Recovered from panic in writeToLog")
+		}
+	}()
+
+	if len(c.CommandLog) == 0 {
+		c.Logger.Warn().Msg("CommandLog is empty")
+		return
+	}
+
 	RepliedLength := len(c.CommandLog) // assume all replied
 	for i := 0; i < len(c.CommandLog); i++ {
 		if c.CommandLog[i].Duration == time.Duration(0) {
-			//c.Logger.Warn("", Int("not replied", i))
 			RepliedLength = i // update RepliedLength if necessary
 			break
 		}
 	}
-	//fmt.Println("RepliedLength =", RepliedLength)
+
+	if RepliedLength == 0 {
+		c.Logger.Warn().Msg("No replies received")
+		return
+	}
 
 	// cmdLogs -- exclude head and tails statistics in BatchedCmdLog:
 	cmdLogs := make([]BatchedCmdLog, int(float64(RepliedLength)*0.8))
@@ -277,8 +293,11 @@ func (c *Client) writeToLog() {
 			break
 		}
 	}
-	//fmt.Println("RepliedLength =", RepliedLength,
-	//	"len of cmdLogs = ", len(cmdLogs), ",", j, "items filled")
+
+	if len(cmdLogs) == 0 {
+		c.Logger.Warn().Msg("No commands in the middle 80% range")
+		return
+	}
 
 	maxLatVal := time.Duration(0)
 	maxLatIdx := 0
@@ -288,8 +307,13 @@ func (c *Client) writeToLog() {
 			maxLatIdx = i + int(float64(RepliedLength)*0.1)
 		}
 	}
+
 	mid80Start := cmdLogs[0].SendTime
 	mid80End := cmdLogs[len(cmdLogs)-1].ReceiveTime
+	if mid80End.Before(mid80Start) {
+		c.Logger.Warn().Msg("End time is before start time")
+		return
+	}
 	mid80Dur := mid80End.Sub(mid80Start).Seconds()
 
 	mid80FirstRecvTime := cmdLogs[0].ReceiveTime
@@ -298,16 +322,31 @@ func (c *Client) writeToLog() {
 	sort.Slice(cmdLogs, func(i, j int) bool {
 		return cmdLogs[i].Duration < cmdLogs[j].Duration
 	})
+
 	minLat := cmdLogs[0].Duration
 	maxLat := cmdLogs[len(cmdLogs)-1].Duration
-	p50Lat := cmdLogs[int(float64(len(cmdLogs))*0.5)].Duration
-	p95Lat := cmdLogs[int(float64(len(cmdLogs))*0.9)].Duration
-	p99Lat := cmdLogs[int(float64(len(cmdLogs))*0.99)].Duration
+
+	p50Index := int(float64(len(cmdLogs)) * 0.5)
+	p95Index := int(float64(len(cmdLogs)) * 0.9)
+	p99Index := int(float64(len(cmdLogs)) * 0.99)
+
+	p50Lat := cmdLogs[min(p50Index, len(cmdLogs)-1)].Duration
+	p95Lat := cmdLogs[min(p95Index, len(cmdLogs)-1)].Duration
+	p99Lat := cmdLogs[min(p99Index, len(cmdLogs)-1)].Duration
+
 	var durSum int64
 	for _, v := range cmdLogs {
 		durSum += v.Duration.Microseconds()
 	}
 	durAvg := durSum / int64(len(cmdLogs))
+
+	var mid80Throughput, mid80Throughput2 float64
+	if mid80Dur > 0 {
+		mid80Throughput = float64(len(cmdLogs)) / mid80Dur
+	}
+	if mid80RecvTimeDur > 0 {
+		mid80Throughput2 = float64(len(cmdLogs)) / mid80RecvTimeDur
+	}
 
 	c.Logger.Warn().
 		Uint32("ClientId", c.ClientId).
@@ -328,6 +367,15 @@ func (c *Client) writeToLog() {
 		Float64("mid80Dur", mid80Dur).
 		Float64("mid80RecvTimeDur", mid80RecvTimeDur).
 		Int("mid80Requests", len(cmdLogs)).
-		Float64("mid80Throughput (cmd/sec)", float64(len(cmdLogs))/mid80Dur).
-		Float64("mid80Throughput2 (cmd/sec)", float64(len(cmdLogs))/mid80RecvTimeDur).Msg("")
+		Float64("mid80Throughput (cmd/sec)", mid80Throughput).
+		Float64("mid80Throughput2 (cmd/sec)", mid80Throughput2).
+		Msg("Client statistics")
+}
+
+// ヘルパー関数
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }

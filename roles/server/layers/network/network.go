@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+   Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 /*
 	The network package defines the network layer of a server, which in charge of communicating with server peers. It
@@ -37,8 +37,20 @@ import (
 	"sync"
 )
 
+// ブロックするIPアドレス
+var blockedIPs = []string{""}
+
+func isIPBlocked(ip string) bool {
+	for _, blockedIP := range blockedIPs {
+		if ip == blockedIP {
+			return true
+		}
+	}
+	return false
+}
+
 /*
-	A Rabia server's peer networking layer (i.e., a network layer)
+A Rabia server's peer networking layer (i.e., a network layer)
 */
 type Network struct {
 	SvrId uint32
@@ -54,7 +66,7 @@ type Network struct {
 }
 
 /*
-	Initiate the network layer
+Initiate the network layer
 */
 func NetworkInit(svrId uint32, done chan struct{}, doneWg *sync.WaitGroup, netIp string,
 	toProxy, proxyIn, msgHandlerIn, conExecutorIn chan Msg,
@@ -78,7 +90,7 @@ func NetworkInit(svrId uint32, done chan struct{}, doneWg *sync.WaitGroup, netIp
 }
 
 /*
-	1. establish network-layer TCP connection(s)
+1. establish network-layer TCP connection(s)
 */
 func (n *Network) Prologue() {
 	n.TCP.Connect()
@@ -86,14 +98,14 @@ func (n *Network) Prologue() {
 }
 
 /*
-	1. close network-layer TCP connection(s)
+1. close network-layer TCP connection(s)
 */
 func (n *Network) Epilogue() {
 	n.TCP.Close()
 }
 
 /*
-	MsgRouter, the main routine of the network layer, see detailed comments below about how it routes messages
+MsgRouter, the main routine of the network layer, see detailed comments below about how it routes messages
 */
 func (n *Network) MsgRouter() {
 	defer n.Wg.Done()
@@ -139,21 +151,26 @@ MainLoop:
 }
 
 /*
-	MsgSerializer routine serialize messages of type Msg to byte arrays. So that multiple NetworkTCP SendHandlers
-	do not need to serialize the same message repeatedly, instead, they take the serialized byte arrays and send
-	them to different peers through TCP connections. For each msg in ToSerializer, MsgSerializer serializes it and
-	send it to all send channels.
+MsgSerializer routine serialize messages of type Msg to byte arrays. So that multiple NetworkTCP SendHandlers
+do not need to serialize the same message repeatedly, instead, they take the serialized byte arrays and send
+them to different peers through TCP connections. For each msg in ToSerializer, MsgSerializer serializes it and
+send it to all send channels.
 */
 func (n *Network) MsgSerializer() {
 	defer n.Wg.Done()
 	for msg := range n.ToSerializer {
-		data, err := msg.Marshal() // gogo-protobuf
-		//data, err := proto.Marshal(&msg) // vanilla protobuf
+		data, err := msg.Marshal()
 		if err != nil {
 			panic(fmt.Sprint("should not happen, marshal error", err))
 		}
-		for _, t := range n.TCP.SendChan { // broadcasting
-			t <- data
+		for i, t := range n.TCP.SendChan {
+			// 送信先のIPアドレスを取得
+			ip := n.TCP.GetPeerIP(i)
+			if !isIPBlocked(ip) {
+				t <- data
+			} else {
+				//fmt.Printf("Skipping message to blocked IP: %s\n", ip)
+			}
 		}
 	}
 }

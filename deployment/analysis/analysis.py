@@ -45,53 +45,65 @@ def load_client_info(log_folder, param, trial):
     for i in range(trial["nc"]["v"]):
         client_log_file_name = f"{param}--client-{i}-0.log"
         client_log_dict = load_json_dict(os.path.join(log_folder, client_log_file_name))
+        if client_log_dict is None:
+            #print(f"クライアントログの読み込みに失敗しました: {client_log_file_name}")
+            continue
+        # 必要なキーが存在するかチェック
+        required_keys = ["sendEnd", "sendStart", "recvEnd", "mid80RecvTimeDur"]
+        if not all(key in client_log_dict for key in required_keys):
+            #print(f"クライアントログ {client_log_file_name} に必要なキーが不足しています")
+            #print(f"存在するキー: {client_log_dict.keys()}")
+            continue
+
         # print(client_log_dict) ##
         trial["client_log_dict_list"].append(client_log_dict)
         trial["client_send_time_list"].append((client_log_dict["sendEnd"] - client_log_dict["sendStart"]))
         trial["client_recv_time_list"].append((client_log_dict["recvEnd"] - client_log_dict["sendStart"]))
         trial["mid80RecvTimeDurs"].append((client_log_dict["mid80RecvTimeDur"]))  # in seconds
 
-    minLat = min([d["minLat"] for d in trial["client_log_dict_list"]])
-    maxLat = max([d["maxLat"] for d in trial["client_log_dict_list"]])
-    avgLat = sum([d["avgLat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
-    p50Lat = sum([d["p50Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
-    p95Lat = sum([d["p95Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
-    p99Lat = sum([d["p99Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
-    trial["minLat"] = {"p": "minimum latency (ms)", "v": round(minLat / 10 ** 3, 2)}
-    trial["maxLat"] = {"p": "maximum latency (ms)", "v": round(maxLat / 10 ** 3, 2)}
-    trial["avgLat"] = {"p": "average latency (ms)", "v": round(avgLat / 10 ** 3, 2)}
-    trial["p50Lat"] = {"p": "50 percentile latency (ms)", "v": round(p50Lat / 10 ** 3, 2)}
-    trial["p95Lat"] = {"p": "95 percentile latency (ms)", "v": round(p95Lat / 10 ** 3, 2)}
-    trial["p99Lat"] = {"p": "99 percentile latency (ms)", "v": round(p99Lat / 10 ** 3, 2)}
+    if trial["client_log_dict_list"]:
 
-    avgSendTime = sum(trial["client_send_time_list"]) / len(trial["client_send_time_list"])
-    avgRecvTime = sum(trial["client_recv_time_list"]) / len(trial["client_recv_time_list"])
-    maxSendTime = max(trial["client_send_time_list"])
-    maxRecvTime = max(trial["client_recv_time_list"])
-    trial["avgSendTime"] = {"p": "average client send time (sec)", "v": round(avgSendTime / 10 ** 9, 2)}
-    trial["avgRecvTime"] = {"p": "average client receive time (sec)", "v": round(avgRecvTime / 10 ** 9, 2)}
-    trial["maxSendTime"] = {"p": "maximum client send time (sec)", "v": round(maxSendTime / 10 ** 9, 2)}
-    trial["maxRecvTime"] = {"p": "maximum client receive time (sec)", "v": round(maxRecvTime / 10 ** 9, 2)}
+        minLat = min([d["minLat"] for d in trial["client_log_dict_list"]])
+        maxLat = max([d["maxLat"] for d in trial["client_log_dict_list"]])
+        avgLat = sum([d["avgLat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
+        p50Lat = sum([d["p50Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
+        p95Lat = sum([d["p95Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
+        p99Lat = sum([d["p99Lat"] for d in trial["client_log_dict_list"]]) / len(trial["client_log_dict_list"])
+        trial["minLat"] = {"p": "minimum latency (ms)", "v": round(minLat / 10 ** 3, 2)}
+        trial["maxLat"] = {"p": "maximum latency (ms)", "v": round(maxLat / 10 ** 3, 2)}
+        trial["avgLat"] = {"p": "average latency (ms)", "v": round(avgLat / 10 ** 3, 2)}
+        trial["p50Lat"] = {"p": "50 percentile latency (ms)", "v": round(p50Lat / 10 ** 3, 2)}
+        trial["p95Lat"] = {"p": "95 percentile latency (ms)", "v": round(p95Lat / 10 ** 3, 2)}
+        trial["p99Lat"] = {"p": "99 percentile latency (ms)", "v": round(p99Lat / 10 ** 3, 2)}
 
-    # exclude the heads and tails for throughput & latency reporting, which is a common practice
-    mid80RecvTime = [d["mid80End"] - d["mid80Start"] for d in trial["client_log_dict_list"]]  # in ns
-    # print(mid80RecvTime)
-    mid80AvgRecvTime = round((sum(mid80RecvTime) / len(mid80RecvTime)) / 10 ** 9, 2)
-    mid80MaxRecvTime = round(max(mid80RecvTime) / 10 ** 9, 2)
-    mid80SumRequests = sum([d["mid80Requests"] for d in trial["client_log_dict_list"]])
-    mid80Throughput = round(mid80SumRequests / mid80MaxRecvTime, 2)
-    trial["mid80AvgRecvTime"] = {"p": "average client receive time -- clients middle 80% (sec)", "v": mid80AvgRecvTime}
-    trial["max80MaxRecvTime"] = {
-        "p": "maximum client receive time -- clients middle 80% (sec) (first send to last recv)", "v": mid80MaxRecvTime}
-    trial["mid80SumRequests"] = {"p": "number of client requests -- clients middle 80%", "v": mid80SumRequests}
-    trial["mid80Throughout"] = {"p": "throughput 1 (ops/sec) -- clients middle 80% (sec) (first send to last recv)", "v": mid80Throughput}
+        avgSendTime = sum(trial["client_send_time_list"]) / len(trial["client_send_time_list"])
+        avgRecvTime = sum(trial["client_recv_time_list"]) / len(trial["client_recv_time_list"])
+        maxSendTime = max(trial["client_send_time_list"])
+        maxRecvTime = max(trial["client_recv_time_list"])
+        trial["avgSendTime"] = {"p": "average client send time (sec)", "v": round(avgSendTime / 10 ** 9, 2)}
+        trial["avgRecvTime"] = {"p": "average client receive time (sec)", "v": round(avgRecvTime / 10 ** 9, 2)}
+        trial["maxSendTime"] = {"p": "maximum client send time (sec)", "v": round(maxSendTime / 10 ** 9, 2)}
+        trial["maxRecvTime"] = {"p": "maximum client receive time (sec)", "v": round(maxRecvTime / 10 ** 9, 2)}
 
-    # for open-loop saturation test
-    mid80MaxRecvToRecvTime = max(trial["mid80RecvTimeDurs"])  # in sec
-    mid80Throughput2 = round(mid80SumRequests / mid80MaxRecvToRecvTime, 2)
-    trial["max80MaxRecvTime 2"] = {
-        "p": "maximum client receive time -- clients middle 80% (sec) (last send to last recv)", "v": mid80MaxRecvTime}
-    trial["mid80Throughout 2"] = {"p": "throughput 2 (ops/sec) -- clients middle 80% (sec) (last send to last recv)", "v": mid80Throughput2}
+        # exclude the heads and tails for throughput & latency reporting, which is a common practice
+        mid80RecvTime = [d["mid80End"] - d["mid80Start"] for d in trial["client_log_dict_list"]]  # in ns
+        # print(mid80RecvTime)
+        mid80AvgRecvTime = round((sum(mid80RecvTime) / len(mid80RecvTime)) / 10 ** 9, 2)
+        mid80MaxRecvTime = round(max(mid80RecvTime) / 10 ** 9, 2)
+        mid80SumRequests = sum([d["mid80Requests"] for d in trial["client_log_dict_list"]])
+        mid80Throughput = round(mid80SumRequests / mid80MaxRecvTime, 2)
+        trial["mid80AvgRecvTime"] = {"p": "average client receive time -- clients middle 80% (sec)", "v": mid80AvgRecvTime}
+        trial["max80MaxRecvTime"] = {
+            "p": "maximum client receive time -- clients middle 80% (sec) (first send to last recv)", "v": mid80MaxRecvTime}
+        trial["mid80SumRequests"] = {"p": "number of client requests -- clients middle 80%", "v": mid80SumRequests}
+        trial["mid80Throughout"] = {"p": "throughput 1 (ops/sec) -- clients middle 80% (sec) (first send to last recv)", "v": mid80Throughput}
+
+        # for open-loop saturation test
+        mid80MaxRecvToRecvTime = max(trial["mid80RecvTimeDurs"])  # in sec
+        mid80Throughput2 = round(mid80SumRequests / mid80MaxRecvToRecvTime, 2)
+        trial["max80MaxRecvTime 2"] = {
+            "p": "maximum client receive time -- clients middle 80% (sec) (last send to last recv)", "v": mid80MaxRecvTime}
+        trial["mid80Throughout 2"] = {"p": "throughput 2 (ops/sec) -- clients middle 80% (sec) (last send to last recv)", "v": mid80Throughput2}
 
 
 def load_proxy_info(log_folder, param, trial):
@@ -196,10 +208,13 @@ def load_server_info(log_folder, param, trial):
             # assert len(machine_throughputs) >= 10, f"the length is = {len(machine_throughputs)} (not enough runtime)"
             machine_mid80_throughputs = machine_throughputs[int(len(machine_throughputs) * 0.1):
                                                             int(len(machine_throughputs) * 0.9)]
+            if len(machine_mid80_throughputs) == 0:
+                break
             machine_mid80_throughput = sum(machine_mid80_throughputs) / len(machine_mid80_throughputs)
             throughputs.append(machine_mid80_throughput)
-        throughput = sum(throughputs) / len(throughputs)
-        trial["throughput"] = {"p": "throughput (ops/sec) -- server 80%", "v": round(throughput, 2)}
+        if len(throughputs) != 0:
+            throughput = sum(throughputs) / len(throughputs)
+            trial["throughput"] = {"p": "throughput (ops/sec) -- server 80%", "v": round(throughput, 2)}
 
 
 def print_statistics():

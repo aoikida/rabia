@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 package controller
 
@@ -26,7 +26,7 @@ import (
 )
 
 /*
-	A benchmarking control command receiver, installed at each server or client.
+A benchmarking control command receiver, installed at each server or client.
 */
 type Receiver struct {
 	Controller   *net.Conn
@@ -36,7 +36,7 @@ type Receiver struct {
 }
 
 /*
-	Initialize a receiver, fields are filled differently based on whether the caller is a server or a client
+Initialize a receiver, fields are filled differently based on whether the caller is a server or a client
 */
 func ReceiverInit(id uint32, isClient bool) *Receiver {
 	c := &Receiver{Id: id}
@@ -49,7 +49,7 @@ func ReceiverInit(id uint32, isClient bool) *Receiver {
 }
 
 /*
-	Connect to the controller
+Connect to the controller
 */
 func (c *Receiver) Connect() {
 	var conn net.Conn
@@ -75,7 +75,7 @@ func (c *Receiver) Connect() {
 }
 
 /*
-	Send a message to the controller
+Send a message to the controller
 */
 func (c *Receiver) MsgToController() {
 	r := Command{CliId: c.Id, CliSeq: c.ServerClient}
@@ -86,13 +86,13 @@ func (c *Receiver) MsgToController() {
 }
 
 /*
-	Wait the controller to send a message
+Wait the controller to send a message
 */
 func (c *Receiver) WaitController() {
 	r := Command{}
 	readBuf := make([]byte, 20)
 	err := r.ReadUnmarshal(c.ReadWriter.Reader, readBuf)
 	if err != nil {
-		panic(fmt.Sprint("should not happen", err))
+		//panic(fmt.Sprint("should not happen", err))
 	}
 }

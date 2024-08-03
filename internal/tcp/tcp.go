@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+   Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 /*
 	The tcp package defines ClientTCP, ProxyTCP, and NetTCP objects, which are the TCP communication component of a
@@ -39,10 +39,10 @@ import (
 )
 
 /*
-	Generates a reader and a writer from a connection.
+Generates a reader and a writer from a connection.
 
-	Note: I suspect that if we call this function twice, the newly generated reader and writer will replace the
-	previously allocated reader and writer. Be aware of any side-effects.
+Note: I suspect that if we call this function twice, the newly generated reader and writer will replace the
+previously allocated reader and writer. Be aware of any side-effects.
 */
 func GetReaderWriter(conn *net.Conn) (*bufio.Reader, *bufio.Writer) {
 	var err error
@@ -68,7 +68,7 @@ func GetReaderWriter(conn *net.Conn) (*bufio.Reader, *bufio.Writer) {
 }
 
 /*
-	Client TCP, each client connects to a single proxy
+Client TCP, each client connects to a single proxy
 */
 type ClientTCP struct {
 	Id   uint32          // client id
@@ -85,7 +85,7 @@ type ClientTCP struct {
 }
 
 /*
-	Returns a ClientTCP with channels initialized, but not Conns, Reader, and Writer fields
+Returns a ClientTCP with channels initialized, but not Conns, Reader, and Writer fields
 */
 func ClientTcpInit(Id uint32, ProxyIp string) *ClientTCP {
 	c := &ClientTCP{
@@ -126,8 +126,8 @@ func (c *ClientTCP) Connect() {
 }
 
 /*
-	For each message received, send the message to RecvChan.
-	RecvHandler exits when the channel is closed.
+For each message received, send the message to RecvChan.
+RecvHandler exits when the channel is closed.
 */
 func (c *ClientTCP) RecvHandler() {
 	defer c.Wg.Done()
@@ -143,15 +143,15 @@ func (c *ClientTCP) RecvHandler() {
 }
 
 /*
-	For each message in SendChan, marshal the message and flush its bytes to the TCP connection through Writer before
-	it exits (when c.Done channel is closed, SendHandler exits).
-	Note:
+For each message in SendChan, marshal the message and flush its bytes to the TCP connection through Writer before
+it exits (when c.Done channel is closed, SendHandler exits).
+Note:
 
-	1. it is likely that c.Done closes before SendHandler sends every message ever passed in SendChan. In that case,
-	some messages are remained in the channel but not sent.
+1. it is likely that c.Done closes before SendHandler sends every message ever passed in SendChan. In that case,
+some messages are remained in the channel but not sent.
 
-	2. if the receiver has closed its connection, it is likely that no error msg is produced here at the sender; if the
-	sender has closed its connection, error indeed happens.
+2. if the receiver has closed its connection, it is likely that no error msg is produced here at the sender; if the
+sender has closed its connection, error indeed happens.
 */
 func (c *ClientTCP) SendHandler() {
 	defer c.Wg.Done()
@@ -169,7 +169,7 @@ func (c *ClientTCP) SendHandler() {
 }
 
 /*
-	Prints the connection status.
+Prints the connection status.
 */
 func (c *ClientTCP) PrintStatus() {
 	fmt.Printf("ClientTcp, SvrId=%d, ProxyAddr=%s, Conns.local=%s, Conns.remote=%s\n",
@@ -177,7 +177,7 @@ func (c *ClientTCP) PrintStatus() {
 }
 
 /*
-	Closes the connection and waits SendHandler and RecvHandler to exit.
+Closes the connection and waits SendHandler and RecvHandler to exit.
 */
 func (c *ClientTCP) Close() {
 	_ = (*c.Conn).Close()
@@ -186,7 +186,7 @@ func (c *ClientTCP) Close() {
 }
 
 /*
-	Proxy TCP, each proxy connects to one or more clients
+Proxy TCP, each proxy connects to one or more clients
 */
 type ProxyTCP struct {
 	Id   uint32          // proxy id
@@ -263,10 +263,10 @@ func (p *ProxyTCP) connect() {
 }
 
 /*
-	Proxy's Connect function is asynchronous - it exits early before connection to all clients (but it has a background
-	routine that waits connections). The primary purpose of this function is exiting correctly. If we want the proxy to
-	exit before connecting to all clients (due to some error or misconfiguration may happened), this function needs to
-	be non-blocking ("Listener.Accept()" is blocking).
+Proxy's Connect function is asynchronous - it exits early before connection to all clients (but it has a background
+routine that waits connections). The primary purpose of this function is exiting correctly. If we want the proxy to
+exit before connecting to all clients (due to some error or misconfiguration may happened), this function needs to
+be non-blocking ("Listener.Accept()" is blocking).
 */
 func (p *ProxyTCP) Connect() {
 	go func() { p.connect() }()
@@ -322,17 +322,19 @@ func (p *ProxyTCP) Close() {
 }
 
 /*
-	Network Layer TCP endpoints, each Rabia server has exactly one NetTCP struct and one network address (NetAddr
-	below). Each server needs to dial to all peers (including itself) to establish send TCP channels, and needs to
-	accept connections from all peers (and itself) to establish receive TCP channels.
+Network Layer TCP endpoints, each Rabia server has exactly one NetTCP struct and one network address (NetAddr
+below). Each server needs to dial to all peers (including itself) to establish send TCP channels, and needs to
+accept connections from all peers (and itself) to establish receive TCP channels.
 
-	For example, when N = 3, each server does the following in Connect initially:
-		waits server 0-2 to connect
-		connects to server 0-2
+For example, when N = 3, each server does the following in Connect initially:
 
-	For example, when N = 5, each server does the following in Connect initially:
-		waits server 0-4 to connect
-		connects to server 0-4
+	waits server 0-2 to connect
+	connects to server 0-2
+
+For example, when N = 5, each server does the following in Connect initially:
+
+	waits server 0-4 to connect
+	connects to server 0-4
 */
 type NetTCP struct {
 	Id   uint32
@@ -502,4 +504,11 @@ func (n *NetTCP) Close() {
 	close(n.Done)
 	_ = n.Listener.Close()
 	n.Wg.Wait()
+}
+
+func (n *NetTCP) GetPeerIP(index int) string {
+	if index < 0 || index >= len(n.SendConn) || n.SendConn[index] == nil {
+		return ""
+	}
+	return (*n.SendConn[index]).RemoteAddr().(*net.TCPAddr).IP.String()
 }

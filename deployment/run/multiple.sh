@@ -53,7 +53,7 @@ run_once() {
   echo ${Rabia_ClientDistributingMethod} "method for distrubting clients"
   echo "num of clients taken by each server = "${Rabia_ClientsPerServer[*]}
   # 2. build Rabia binary
-  multi_build_binary
+  #multi_build_binary
   # 3. start all servers
   start_servers ${1}
   # 4. start all clients
