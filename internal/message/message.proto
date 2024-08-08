@@ -55,17 +55,18 @@ syntax = "proto3";
     cd ~/go/src/rabia/internal/message
 
     if you want to use gogo-protobuf:
-      protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/github.com/gogo/protobuf/protobuf --gogoslick_out=. ./message.proto
+      protoc -I=. -I=/usr/local/go/src -I=/usr/local/go/src/github.com/gogo/protobuf/protobuf --gogoslick_out=. ./message.proto
 
     if you want to use the vanilla protobuf:
       protoc -I=. -I=$GOPATH/src -I=<path to the unzip-ed include folder>/google/protobuf --go_out=. ./message.proto
     mine is:
-      protoc -I=. -I=$GOPATH/src -I=$GOPATH/src/google/protobuf --go_out=. ./message.proto
+      protoc -I=. -I=/usr/local/go/src -I=/usr/local/go/src/google/protobuf --go_out=. ./message.proto
  */
 
 /*
   gogo-protobuf header (please comment out the vanilla protobuf header)
 */
+
 package message;
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 option (gogoproto.marshaler_all) = true;
@@ -74,6 +75,7 @@ option (gogoproto.goproto_getters_all) = false;
 option (gogoproto.testgen_all) = true;
 option (gogoproto.benchgen_all) = true;
 option (gogoproto.populate_all) = true;
+
 /*
   the end of the gogo-protobuf header
 */
@@ -177,6 +179,7 @@ enum MsgType {
   ProposalRequest = 4;
   ProposalReply = 5;
   Decision = 6;
+  PQcheck = 7;
 }
 
 /*
