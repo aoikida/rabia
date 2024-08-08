@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 package consensus
 
@@ -23,14 +23,14 @@ import (
 )
 
 /*
-	The consensus executor's main function, mainly an event-driven (incoming messages) for-loop. See more comments in
-	called functions. After the for-loop, it counts statistics and write them to the log file.
+		The consensus executor's main function, mainly an event-driven (incoming messages) for-loop. See more comments in
+		called functions. After the for-loop, it counts statistics and write them to the log file.
 
-	Special notes on ProposalRequest and ProposalReply (again)
-	ProposalRequest:
- 	Phase: SvrId (the source server's id), Value: the sequence number of the proposal
-	ProposalReply:
- 	Phase: the destination server's id, Value: the sequence number of the proposal
+		Special notes on ProposalRequest and ProposalReply (again)
+		ProposalRequest:
+	 	Phase: SvrId (the source server's id), Value: the sequence number of the proposal
+		ProposalReply:
+	 	Phase: the destination server's id, Value: the sequence number of the proposal
 */
 func (c *Consensus) Executor() {
 	time.Sleep(Conf.ConsensusStartAfter)
@@ -102,7 +102,7 @@ MainLoop:
 }
 
 /*
-	Generates a Proposal message by fetching the MyProposal field in the Ledger slot
+Generates a Proposal message by fetching the MyProposal field in the Ledger slot
 */
 func (c *Consensus) genProposalMsg(seq uint32) Msg {
 	c.PanicTermNotMatched(seq)
@@ -114,7 +114,7 @@ func (c *Consensus) genProposalMsg(seq uint32) Msg {
 }
 
 /*
-	Generates a State or Vote message by fetching the MyBiConMsg field in the Ledger slot
+Generates a State or Vote message by fetching the MyBiConMsg field in the Ledger slot
 */
 func (c *Consensus) genBinConMsg(seq, pse, rod uint32) Msg {
 	c.PanicTermNotMatched(seq)
@@ -133,7 +133,7 @@ func (c *Consensus) genBinConMsg(seq, pse, rod uint32) Msg {
 }
 
 /*
-	Generates a Decision message by concluding information (i.e., the current majority value) from the Ledger
+Generates a Decision message by concluding information (i.e., the current majority value) from the Ledger
 */
 func (c *Consensus) genDecMsgType1(seq uint32) Msg {
 	c.PanicTermNotMatched(seq)
@@ -145,8 +145,8 @@ func (c *Consensus) genDecMsgType1(seq uint32) Msg {
 }
 
 /*
-	Generates a Decision message by concluding information (i.e., the consensus object) from an incoming Decision
-	message
+Generates a Decision message by concluding information (i.e., the consensus object) from an incoming Decision
+message
 */
 func (c *Consensus) genDecMsgType2(seq uint32, obj ConsensusObj) Msg {
 	obj.SvrSeq = seq
@@ -155,10 +155,10 @@ func (c *Consensus) genDecMsgType2(seq uint32, obj ConsensusObj) Msg {
 }
 
 /*
-	Generates a ProposalReply message to answer a particular ProposalRequest.
-	Note: call this function only when it is safe to reply:
-		1. the slot holds >= n - f proposal, and
-		2. the majority value's count >= n / 2 + 1
+Generates a ProposalReply message to answer a particular ProposalRequest.
+Note: call this function only when it is safe to reply:
+ 1. the slot holds >= n - f proposal, and
+ 2. the majority value's count >= n / 2 + 1
 */
 func (c *Consensus) genProposalReply(seq uint32, dst uint32) Msg {
 	c.PanicTermNotMatched(seq)
@@ -170,8 +170,8 @@ func (c *Consensus) genProposalReply(seq uint32, dst uint32) Msg {
 }
 
 /*
-	Waits enough Proposal, State, or Vote message or jumps out of the process of deciding the current slot if a Decision
-	message is received
+Waits enough Proposal, State, or Vote message or jumps out of the process of deciding the current slot if a Decision
+message is received
 */
 func (c *Consensus) wait(seq uint32) bool {
 	c.PanicTermNotMatched(seq)
@@ -215,7 +215,7 @@ func (c *Consensus) wait(seq uint32) bool {
 }
 
 /*
-	The code for Phase 0, Round 1, before waiting for enough message
+The code for Phase 0, Round 1, before waiting for enough message
 */
 func (c *Consensus) phase0Round1BeforeWait(seq uint32) {
 	msg := c.genProposalMsg(seq)
@@ -223,7 +223,7 @@ func (c *Consensus) phase0Round1BeforeWait(seq uint32) {
 }
 
 /*
-	The code for Phase 0, Round 1, after enough messages are arrived
+The code for Phase 0, Round 1, after enough messages are arrived
 */
 func (c *Consensus) phase0Round1AfterWait(seq uint32) (ConsensusObj, bool) {
 	c.PanicTermNotMatched(seq)
@@ -243,7 +243,7 @@ func (c *Consensus) phase0Round1AfterWait(seq uint32) (ConsensusObj, bool) {
 }
 
 /*
-	The code for Phase 0, Round 2, before waiting for enough message
+The code for Phase 0, Round 2, before waiting for enough message
 */
 func (c *Consensus) phase0Round2BeforeWait(seq uint32) {
 	msg := c.genBinConMsg(seq, 0, 2)
@@ -251,7 +251,7 @@ func (c *Consensus) phase0Round2BeforeWait(seq uint32) {
 }
 
 /*
-	The code for Phase 0, Round 2, after enough messages are arrived
+The code for Phase 0, Round 2, after enough messages are arrived
 */
 func (c *Consensus) phase0Round2AfterWait(seq uint32) (ConsensusObj, bool) {
 	c.PanicTermNotMatched(seq)
@@ -276,7 +276,7 @@ func (c *Consensus) phase0Round2AfterWait(seq uint32) (ConsensusObj, bool) {
 }
 
 /*
-	The code for Phase 1-N, Round 1, before waiting for enough message
+The code for Phase 1-N, Round 1, before waiting for enough message
 */
 func (c *Consensus) phaseNRound1BeforeWait(seq uint32) {
 	c.PanicTermNotMatched(seq)
@@ -287,7 +287,7 @@ func (c *Consensus) phaseNRound1BeforeWait(seq uint32) {
 }
 
 /*
-	The code for Phase 1-N, Round 1, after enough messages are arrived
+The code for Phase 1-N, Round 1, after enough messages are arrived
 */
 func (c *Consensus) phaseNRound1AfterWait(seq uint32) (ConsensusObj, bool) {
 	c.PanicTermNotMatched(seq)
@@ -310,7 +310,7 @@ func (c *Consensus) phaseNRound1AfterWait(seq uint32) (ConsensusObj, bool) {
 }
 
 /*
-	The code for Phase 0, Round 2, before waiting for enough message
+The code for Phase 0, Round 2, before waiting for enough message
 */
 func (c *Consensus) phaseNRound2BeforeWait(seq uint32) {
 	c.PanicTermNotMatched(seq)
@@ -322,7 +322,7 @@ func (c *Consensus) phaseNRound2BeforeWait(seq uint32) {
 }
 
 /*
-	The code for Phase 0, Round 2, after enough messages are arrived
+The code for Phase 0, Round 2, after enough messages are arrived
 */
 func (c *Consensus) phaseNRound2AfterWait(seq uint32) (ConsensusObj, bool) {
 	c.PanicTermNotMatched(seq)
@@ -345,7 +345,7 @@ func (c *Consensus) phaseNRound2AfterWait(seq uint32) (ConsensusObj, bool) {
 }
 
 /*
-	sends a proposal request and waits for a respective reply
+sends a proposal request and waits for a respective reply
 */
 func (c *Consensus) requestProposalAndWait(seq uint32) ConsensusObj {
 	//fmt.Println(c.SvrId, "seq = ", seq, "requestProposalAndWait")
@@ -365,7 +365,7 @@ func (c *Consensus) requestProposalAndWait(seq uint32) ConsensusObj {
 }
 
 /*
-	The find return value function that follows Rabia's pseudo-code
+The find return value function that follows Rabia's pseudo-code
 */
 func (c *Consensus) findReturnValue(seq, pse, rod uint32) ConsensusObj {
 	c.PanicTermNotMatched(seq)
@@ -384,14 +384,14 @@ func (c *Consensus) findReturnValue(seq, pse, rod uint32) ConsensusObj {
 }
 
 /*
-	Sends a message to the network layer
+Sends a message to the network layer
 */
 func (c *Consensus) toNet(msg Msg) {
 	c.ConExecutorToNet <- msg
 }
 
 /*
-	Sets my proposal and return true if there's a pending request, otherwise, return false
+Sets my proposal and return true if there's a pending request, otherwise, return false
 */
 func (c *Consensus) getRequest() bool {
 	if obj, ok := c.QPop(); ok {
@@ -414,7 +414,7 @@ func (c *Consensus) getRequest() bool {
 }
 
 /*
-	Actions performed when a decision is reached
+Actions performed when a decision is reached
 */
 func (c *Consensus) epilogue(seq uint32, dec ConsensusObj) {
 	c.PanicTermNotMatched(seq)
@@ -427,6 +427,18 @@ func (c *Consensus) epilogue(seq uint32, dec ConsensusObj) {
 		c.NullSlots++
 		c.CurrConsecutiveNulls++
 		c.putBackMyProposal(seq)
+		//fmt.Printf("seq = %d, SvrId = %d, NullSlots = %d\n", seq, c.SvrId, c.NullSlots)
+		//連続でNULL値に合意した場合, PQの先頭の要素を取り出して送信
+		if c.CurrConsecutiveNulls >= 10 {
+			//fmt.Printf("dec command = %s, seq = %d, SvrId = %d, CurrConsecutiveNulls = %d\n", dec.Commands[0], seq, c.SvrId, c.CurrConsecutiveNulls)
+			seq := uint32(c.SvrSeq)
+			c.PanicTermNotMatched(seq)
+			slot := seq % Conf.LenLedger
+			obj := c.Ledger[slot].GetMyProposal()
+			obj.SvrSeq = seq
+			msg := Msg{Type: PQcheck, Obj: &obj}
+			c.toNet(msg)
+		}
 
 	} else {
 		if c.CurrConsecutiveNulls > c.MaxConsecutiveNulls {
@@ -513,7 +525,7 @@ func (c *Consensus) epilogue(seq uint32, dec ConsensusObj) {
 }
 
 /*
-	Put my proposal back to the request pending queue
+Put my proposal back to the request pending queue
 */
 func (c *Consensus) putBackMyProposal(seq uint32) {
 	c.PanicTermNotMatched(seq)

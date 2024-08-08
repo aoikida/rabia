@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 package consensus
 
@@ -21,10 +21,10 @@ import (
 )
 
 /*
-	The MsgHandler routine does not forward each of Proposal, State, Vote, and Decision messages directly to the
-	Executor. Instead, after gathering strictly n - f messages for each round (see where HasEnoughMsg is called),
-	it then notifies the Executor. MsgHandler ignores future messages for this round to make sure the majority value
-	is stable after notifying the Executor.
+The MsgHandler routine does not forward each of Proposal, State, Vote, and Decision messages directly to the
+Executor. Instead, after gathering strictly n - f messages for each round (see where HasEnoughMsg is called),
+it then notifies the Executor. MsgHandler ignores future messages for this round to make sure the majority value
+is stable after notifying the Executor.
 */
 func (c *Consensus) MsgHandler() {
 	defer c.Wg.Done()
@@ -55,7 +55,7 @@ MainLoop:
 						c.MsgHandlerToNet <- c.genProposalReply(msg.Value, msg.Phase)
 					}
 				}
-			case Proposal, State, Vote, Decision:
+			case Proposal, State, Vote, Decision, PQcheck:
 				c.binConMsgHandling(msg)
 			default: // ProposalReply should never be received by MsgHandler
 				panic("should not happen, this msg type should not go to MsgHandler")
@@ -65,7 +65,7 @@ MainLoop:
 }
 
 /*
-	Handles Proposal, State, Vote, and Decision messages
+Handles Proposal, State, Vote, and Decision messages
 */
 func (c *Consensus) binConMsgHandling(msg Msg) {
 	seq := msg.Obj.SvrSeq
@@ -81,9 +81,12 @@ func (c *Consensus) binConMsgHandling(msg Msg) {
 	}
 	switch msg.Type {
 	case Proposal:
+		// if the slot has enough proposals, then return
+
 		if c.Ledger[slot].HasEnoughMsg(0, 1) {
 			return
 		}
+
 		c.Ledger[slot].PutRecvProposals(*msg.Obj)
 		if c.Ledger[slot].HasEnoughMsg(0, 1) {
 			out := Msg{Phase: 0, Type: Proposal, Value: seq}
@@ -114,6 +117,12 @@ func (c *Consensus) binConMsgHandling(msg Msg) {
 		if !c.Ledger[slot].HasRecvDec {
 			c.Ledger[slot].Queue <- msg
 			c.Ledger[slot].HasRecvDec = true
+		}
+	case PQcheck:
+		//受け取った要素がPQ内に含まれているかどうかを確認
+		if !c.Queue.Check(msg.Obj) {
+			//ログの中に含まれているかどうかを確認
+			c.QPush(*msg.Obj)
 		}
 	}
 

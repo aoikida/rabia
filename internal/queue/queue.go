@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+   Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License.
 */
 /*
 	The queue package defines an implementation of the ConsensusObj priority queue, which is used to sort (based on the
@@ -35,7 +35,7 @@ func (q PQueue) Len() int {
 	return len(q)
 }
 
-//  The priority is defined by the ProxySeqIdLessThan function (see that function's comment)
+// The priority is defined by the ProxySeqIdLessThan function (see that function's comment)
 func (q PQueue) Less(i, j int) bool {
 	return message.ProxySeqIdLessThan(&q[i], &q[j])
 }
@@ -45,10 +45,10 @@ func (q PQueue) Swap(i, j int) {
 }
 
 /*
-	Note: suppose q is a PQueue object, do not call q.Push and q.Pop directly, instead, call heap.Push and heap.Pop,
-	which calls q.Push or q.Pop and performs sorting.
+Note: suppose q is a PQueue object, do not call q.Push and q.Pop directly, instead, call heap.Push and heap.Pop,
+which calls q.Push or q.Pop and performs sorting.
 
-	Push and Pop use pointer receivers because they modify the slice's length, not just its contents.
+Push and Pop use pointer receivers because they modify the slice's length, not just its contents.
 */
 func (q *PQueue) Push(x interface{}) {
 	*q = append(*q, x.(message.ConsensusObj))
@@ -61,4 +61,14 @@ func (q *PQueue) Pop() interface{} {
 	//old[n-1] = nil // avoid memory leak (only used if PQueue is defined as []*ConsensusObj)
 	*q = old[0 : n-1]
 	return x
+}
+
+// キューに特定の要素が存在するかを確認する
+func (q *PQueue) Check(obj *message.ConsensusObj) bool {
+	for _, o := range *q {
+		if message.ProxySeqIdEqual(&o, obj) {
+			return true
+		}
+	}
+	return false
 }
