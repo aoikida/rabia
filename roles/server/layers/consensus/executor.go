@@ -429,7 +429,7 @@ func (c *Consensus) epilogue(seq uint32, dec ConsensusObj) {
 		c.putBackMyProposal(seq)
 		//fmt.Printf("seq = %d, SvrId = %d, NullSlots = %d\n", seq, c.SvrId, c.NullSlots)
 		//連続でNULL値に合意した場合, PQの先頭の要素を取り出して送信
-		if c.CurrConsecutiveNulls >= 10 {
+		if c.CurrConsecutiveNulls >= 50 {
 			//fmt.Printf("dec command = %s, seq = %d, SvrId = %d, CurrConsecutiveNulls = %d\n", dec.Commands[0], seq, c.SvrId, c.CurrConsecutiveNulls)
 			seq := uint32(c.SvrSeq)
 			c.PanicTermNotMatched(seq)
