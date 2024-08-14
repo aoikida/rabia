@@ -1,17 +1,17 @@
 /*
-    Copyright 2021 Rabia Research Team and Developers
+Copyright 2021 Rabia Research Team and Developers
 
-    Licensed under the Apache License, Version 2.0 (the "License");
-    you may not use this file except in compliance with the License.
-    You may obtain a copy of the License at
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-       http://www.apache.org/licenses/LICENSE-2.0
+	http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing, software
-    distributed under the License is distributed on an "AS IS" BASIS,
-    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-    See the License for the specific language governing permissions and
-    limitations under the License.
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 */
 package config
 
@@ -34,8 +34,8 @@ import (
 */
 
 /*
-	Conf is the global object that stores this server's/client's/controller's configurations. It needs to be global
-	because functions in other go files of Rabia often needs to use it
+Conf is the global object that stores this server's/client's/controller's configurations. It needs to be global
+because functions in other go files of Rabia often needs to use it
 */
 var Conf Config
 
@@ -60,7 +60,8 @@ type Config struct {
 	*/
 
 	// If Role == cli, the following field should be filled
-	ProxyAddr string // the client proxy's SvrIp:ProxyPort
+	ProxyAddr  string   // the client proxy's SvrIp:ProxyPort
+	ProxyAddrs []string // the array of all servers' SvrIp:ProxyPort
 
 	// For all roles, the following fields should be filled
 	ClosedLoop bool // whether clients are closed-loop clients
@@ -98,6 +99,7 @@ type Config struct {
 	SvrLogInterval      time.Duration // a server logger's sleep time after generating a log
 	ClientLogInterval   time.Duration // a client logger's sleep time after generating a log
 	ClientTimeout       time.Duration // closed-loop only, a client exits after ClientTimeout
+	CrashTimeout        time.Duration
 	ConsensusStartAfter time.Duration // after this time, the consensus executor will start working (this variable is for saturating the system with open-loop clients)
 	StorageMode         int           // 0: the dictionary KV store, 1: Redis GET&SET, 2: Redis MGET&MSET
 	RedisAddr           []string      // only used when StorageMode is 1 or 2
@@ -120,6 +122,7 @@ func (c *Config) loadEnvVars1() {
 	c.Peers = strings.Split(os.Getenv("RC_Peers"), " ")
 
 	c.ProxyAddr = os.Getenv("RC_Proxy")
+	c.ProxyAddrs = strings.Split(os.Getenv("RC_Proxies"), " ")
 }
 
 func (c *Config) loadEnvVars2() {
@@ -141,6 +144,7 @@ func (c *Config) loadEnvVars2() {
 	Conf.ClientBatchSize = getEnvInt("Rabia_ClientBatchSize")
 	Conf.ClientTimeout = time.Duration(getEnvInt("Rabia_ClientTimeout")) * time.Second
 	Conf.ClientThinkTime = getEnvInt("Rabia_ClientThinkTime")
+	Conf.CrashTimeout = time.Duration(getEnvInt("Rabia_CrashTimeout")) * time.Second
 	Conf.NClientRequests = getEnvInt("Rabia_ClientNRequests")
 }
 
@@ -163,7 +167,7 @@ func (c *Config) CalcConstants() {
 	c.ValLen = 8
 
 	c.SvrLogInterval = 4 * time.Second
-	c.ClientLogInterval = 15 * time.Second
+	c.ClientLogInterval = 1 * time.Second
 	c.ConsensusStartAfter = 0 * time.Second // for open-loop testings
 }
 
@@ -185,8 +189,8 @@ func getEnvInt(key string) int {
 }
 
 /*
-	Convert a string to an integer array
-	str: the input string, integers in the string are separated by spaces (e.g., "1 3 5 7 9")
+Convert a string to an integer array
+str: the input string, integers in the string are separated by spaces (e.g., "1 3 5 7 9")
 */
 func strToIntArray(str string) []int {
 	strs := strings.Split(str, " ")

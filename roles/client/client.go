@@ -135,19 +135,44 @@ The main body of a closed-loop client.
 A closed-loop client sends one (batched) request and waits for a reply at a time. In waiting for a reply, if the
 client finds the Conf.ClientTimeout time is reached, it exits the loop.
 */
-func (c *Client) CloseLoopClient() {
+func (c *Client) CloseLoopClient(proxyList []string) {
 	c.startSending = time.Now()
+	// modulo方式で行っている場合のproxyIdの同定方法
+	currentProxyIndex := int(c.ClientId) % len(proxyList)
+	maxRetries := len(proxyList)
 	ticker := time.NewTicker(Conf.ClientTimeout)
-MainLoop:
+
 	for i := 0; i < Conf.NClientRequests/Conf.ClientBatchSize; i++ {
-		c.sendOneRequest(i)
-		select {
-		case rep := <-c.TCP.RecvChan:
-			c.processOneReply(rep)
-		case <-ticker.C:
-			break MainLoop
+		retries := 0
+		for {
+			c.sendOneRequest(i)
+
+			select {
+			case rep := <-c.TCP.RecvChan:
+				c.processOneReply(rep)
+				goto NextRequest
+			case <-ticker.C:
+				goto End
+			case <-time.After(Conf.CrashTimeout):
+				fmt.Println("CrashTimeout !!!")
+				retries++
+				if retries >= maxRetries {
+					c.Logger.Warn().Msg("All proxies failed. Exiting.")
+					goto End
+				}
+
+				currentProxyIndex = (currentProxyIndex + 1) % len(proxyList)
+				newProxy := proxyList[currentProxyIndex]
+
+				c.TCP.Close()
+				c.TCP = tcp.ClientTcpInit(c.ClientId, newProxy)
+				c.TCP.Connect()
+			}
 		}
+	NextRequest:
 	}
+
+End:
 	c.endSending = time.Now()
 	c.endReceiving = time.Now()
 }

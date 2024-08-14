@@ -109,7 +109,7 @@ END
 
 # Section 1. user configurations - type 1 (see comments above for their meanings)
 ServerIps=(172.31.36.163 172.31.35.252 172.31.45.13)
-ClientIps=(172.31.42.193 172.31.42.193 172.31.42.193)
+ClientIps=(172.31.35.252 172.31.35.252 172.31.35.252)
 Controller=172.31.36.163:8070
 ProxyStartPort=18080
 NetworkStartPort=28080
@@ -128,7 +128,7 @@ NServers=3
 NFaulty=1
 NClients=3
 NConcurrency=1
-ClientTimeout=20
+ClientTimeout=60
 ClientThinkTime=0
 ClientBatchSize=1
 ProxyBatchSize=1
@@ -136,6 +136,7 @@ ProxyBatchTimeout=10
 NetworkBatchSize=0
 NetworkBatchTimeout=0
 NClientRequests=0
+CrashTimeout=10
 
 : <<'END'
     No need to modify variables and functions beyond this line 
@@ -218,7 +219,7 @@ export_variables() {
     export Rabia_ClosedLoop=${Rabia_ClosedLoop}
 
     export Rabia_NServers=$NServers Rabia_NFaulty=$NFaulty Rabia_NClients=$NClients Rabia_NConcurrency=$NConcurrency
-    export Rabia_ClientBatchSize=$ClientBatchSize Rabia_ClientTimeout=$ClientTimeout Rabia_ClientThinkTime=$ClientThinkTime Rabia_ClientNRequests=$NClientRequests
+    export Rabia_ClientBatchSize=$ClientBatchSize Rabia_ClientTimeout=$ClientTimeout Rabia_ClientThinkTime=$ClientThinkTime Rabia_ClientNRequests=$NClientRequests Rabia_CrashTimeout=$CrashTimeout
     export Rabia_ProxyBatchSize=$ProxyBatchSize Rabia_ProxyBatchTimeout=$ProxyBatchTimeout Rabia_NetworkBatchSize=$NetworkBatchSize Rabia_NetworkBatchTimeout=$NetworkBatchTimeout
 }
 
