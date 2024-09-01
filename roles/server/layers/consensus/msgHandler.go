@@ -71,7 +71,7 @@ MainLoop:
 						c.MsgHandlerToNet <- c.genProposalReply(msg.Value, msg.Phase)
 					}
 				}
-			case Proposal, State, Vote, Decision, PQcheck:
+			case Proposal, State, Vote, Decision, QueueSync:
 				c.binConMsgHandling(msg)
 			default: // ProposalReply should never be received by MsgHandler
 				panic("should not happen, this msg type should not go to MsgHandler")
@@ -134,7 +134,7 @@ func (c *Consensus) binConMsgHandling(msg Msg) {
 			c.Ledger[slot].Queue <- msg
 			c.Ledger[slot].HasRecvDec = true
 		}
-	case PQcheck:
+	case QueueSync:
 		//受け取った要素がPQ内に含まれているかどうかを確認
 		if !c.Queue.Check(msg.Obj) {
 			//ログの中に含まれているかどうかを確認

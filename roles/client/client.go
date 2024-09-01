@@ -139,11 +139,17 @@ func (c *Client) CloseLoopClient(proxyList []string) {
 	c.startSending = time.Now()
 	// modulo方式で行っている場合のproxyIdの同定方法
 	currentProxyIndex := int(c.ClientId) % len(proxyList)
+	fmt.Println("proxyList:", proxyList)
+	fmt.Println("proxyList[0]", proxyList[0])
+	fmt.Println("proxyList[1]", proxyList[1])
+	fmt.Println("proxyList[2]", proxyList[2])
 	maxRetries := len(proxyList)
+	fmt.Println("maxRetries:", maxRetries)
 	ticker := time.NewTicker(Conf.ClientTimeout)
 
 	for i := 0; i < Conf.NClientRequests/Conf.ClientBatchSize; i++ {
 		retries := 0
+		fmt.Println("Conf.NClientRequests/Conf.ClientBatchSize:", Conf.NClientRequests/Conf.ClientBatchSize)
 		for {
 			c.sendOneRequest(i)
 
@@ -163,6 +169,8 @@ func (c *Client) CloseLoopClient(proxyList []string) {
 
 				currentProxyIndex = (currentProxyIndex + 1) % len(proxyList)
 				newProxy := proxyList[currentProxyIndex]
+
+				fmt.Println("Switching to new proxy:", newProxy)
 
 				c.TCP.Close()
 				c.TCP = tcp.ClientTcpInit(c.ClientId, newProxy)

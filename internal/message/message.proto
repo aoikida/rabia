@@ -179,7 +179,7 @@ enum MsgType {
   ProposalRequest = 4;
   ProposalReply = 5;
   Decision = 6;
-  PQcheck = 7;
+  QueueSync = 7;
 }
 
 /*

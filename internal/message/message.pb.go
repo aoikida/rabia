@@ -81,7 +81,7 @@ const (
 	ProposalRequest MsgType = 4
 	ProposalReply   MsgType = 5
 	Decision        MsgType = 6
-	PQcheck         MsgType = 7
+	QueueSync         MsgType = 7
 )
 
 var MsgType_name = map[int32]string{
@@ -92,7 +92,7 @@ var MsgType_name = map[int32]string{
 	4: "ProposalRequest",
 	5: "ProposalReply",
 	6: "Decision",
-	7: "PQcheck",
+	7: "QueueSync",
 }
 
 var MsgType_value = map[string]int32{
@@ -103,7 +103,7 @@ var MsgType_value = map[string]int32{
 	"ProposalRequest": 4,
 	"ProposalReply":   5,
 	"Decision":        6,
-	"PQcheck":         7,
+	"QueueSync":         7,
 }
 
 func (MsgType) EnumDescriptor() ([]byte, []int) {

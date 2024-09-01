@@ -436,7 +436,7 @@ func (c *Consensus) epilogue(seq uint32, dec ConsensusObj) {
 			slot := seq % Conf.LenLedger
 			obj := c.Ledger[slot].GetMyProposal()
 			obj.SvrSeq = seq
-			msg := Msg{Type: PQcheck, Obj: &obj}
+			msg := Msg{Type: QueueSync, Obj: &obj}
 			c.toNet(msg)
 		}
 
